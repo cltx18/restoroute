@@ -315,6 +315,30 @@ section { padding: 70px 0; }
   color: var(--text-muted);
 }
 
+/* City link grid (Denver metro service area chips) */
+.city-link-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+.city-link {
+  display: block;
+  padding: 12px 16px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--primary) !important;
+  font-size: 0.92rem;
+  text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.city-link:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
 /* How it works */
 .steps-grid {
   display: grid;

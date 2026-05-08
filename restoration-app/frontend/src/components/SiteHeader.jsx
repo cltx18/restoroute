@@ -18,7 +18,7 @@ export default function SiteHeader() {
         <div className="container header-inner">
           <Link to="/" className="logo">
             <span className="logo-mark">🛠️</span>
-            RestoreLink
+            Local Restore & Clean
           </Link>
           <nav className="nav">
             <Link to="/services/water-damage-restoration">Water Damage</Link>

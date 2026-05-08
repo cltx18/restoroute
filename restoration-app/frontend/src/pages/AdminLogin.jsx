@@ -28,7 +28,7 @@ export default function AdminLogin() {
     <div className="admin-login-page">
       <div className="admin-login-card">
         <h1>Admin Sign In</h1>
-        <p className="sub">RestoreLink vendor management portal.</p>
+        <p className="sub">Local Restore & Clean vendor management portal.</p>
 
         {error && <div className="alert alert-error">{error}</div>}
 

@@ -5,6 +5,7 @@ import SEO from '../components/SEO.jsx';
 import SiteHeader, { PHONE_DISPLAY, PHONE_HREF } from '../components/SiteHeader.jsx';
 import SiteFooter from '../components/SiteFooter.jsx';
 import { SERVICES, SERVICE_LIST } from '../data/services.js';
+import { CITY_LIST } from '../data/cities.js';
 
 export default function ServicePage() {
   const { slug } = useParams();
@@ -27,10 +28,10 @@ export default function ServicePage() {
         description: service.metaDescription,
         provider: {
           '@type': 'LocalBusiness',
-          name: 'RestoreLink',
+          name: 'Local Restore & Clean',
           telephone: '+18556981510',
         },
-        areaServed: 'United States',
+        areaServed: 'Denver Metro Area, Colorado',
         url: canonical,
       },
       {
@@ -149,6 +150,23 @@ export default function ServicePage() {
                 </summary>
                 <p style={{ marginTop: 10, color: 'var(--text)', lineHeight: 1.7 }}>{f.a}</p>
               </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Service area cities for this service */}
+      <section style={{ background: '#fff' }}>
+        <div className="container">
+          <h2 className="section-title">{service.title} Across Denver Metro</h2>
+          <p className="section-subtitle">
+            We connect homeowners with {service.title.toLowerCase()} specialists across the Denver area.
+          </p>
+          <div className="city-link-grid">
+            {CITY_LIST.map((c) => (
+              <Link key={c.slug} to={`/services/${service.slug}/${c.slug}`} className="city-link">
+                {service.title} in {c.name}
+              </Link>
             ))}
           </div>
         </div>

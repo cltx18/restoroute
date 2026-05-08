@@ -4,6 +4,7 @@ import SEO from '../components/SEO.jsx';
 import SiteHeader, { PHONE_DISPLAY, PHONE_HREF } from '../components/SiteHeader.jsx';
 import SiteFooter from '../components/SiteFooter.jsx';
 import { SERVICE_LIST } from '../data/services.js';
+import { CITY_LIST } from '../data/cities.js';
 
 export default function LandingPage() {
   const canonical = (typeof window !== 'undefined' ? window.location.origin : '') + '/';
@@ -11,20 +12,36 @@ export default function LandingPage() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
-    name: 'RestoreLink',
+    name: 'Local Restore & Clean',
     description:
-      'Restoration contractor referral service. Connecting homeowners with vetted local water damage, mold, fire, and biohazard restoration professionals.',
+      'Restoration contractor referral service for the Denver metro area. Connecting homeowners with vetted local water damage, mold, fire, and biohazard restoration professionals.',
     telephone: '+18556981510',
     url: canonical,
-    areaServed: 'United States',
+    areaServed: [
+      { '@type': 'City', name: 'Denver, CO' },
+      { '@type': 'City', name: 'Aurora, CO' },
+      { '@type': 'City', name: 'Lakewood, CO' },
+      { '@type': 'City', name: 'Thornton, CO' },
+      { '@type': 'City', name: 'Arvada, CO' },
+      { '@type': 'City', name: 'Westminster, CO' },
+      { '@type': 'City', name: 'Centennial, CO' },
+      { '@type': 'City', name: 'Boulder, CO' },
+      { '@type': 'City', name: 'Highlands Ranch, CO' },
+      { '@type': 'City', name: 'Englewood, CO' },
+      { '@type': 'City', name: 'Wheat Ridge, CO' },
+      { '@type': 'City', name: 'Littleton, CO' },
+      { '@type': 'City', name: 'Parker, CO' },
+      { '@type': 'City', name: 'Castle Rock, CO' },
+      { '@type': 'City', name: 'Commerce City, CO' },
+    ],
     priceRange: 'Free quotes',
   };
 
   return (
     <>
       <SEO
-        title="RestoreLink — Connect With Local Restoration Pros 24/7"
-        description="Get connected with vetted local restoration professionals for water damage, mold removal, fire restoration, biohazard cleanup, and more. Free quotes. 24/7 service."
+        title="Local Restore & Clean — 24/7 Restoration Services in Denver Metro"
+        description="Local restoration specialists for water damage, mold, fire, biohazard, and more across the Denver metro area. Free quotes. Same-day response. 24/7 emergency service."
         canonical={canonical}
         jsonLd={jsonLd}
       />
@@ -116,6 +133,22 @@ export default function LandingPage() {
               <h3>Any Project Size</h3>
               <p>From a small leak to a full rebuild — we'll find the right pro for the job.</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ background: '#fff' }}>
+        <div className="container">
+          <h2 className="section-title">Denver Metro Service Areas</h2>
+          <p className="section-subtitle">
+            We connect homeowners with local restoration professionals across the entire Denver metro area.
+          </p>
+          <div className="city-link-grid">
+            {CITY_LIST.map((c) => (
+              <Link key={c.slug} to={`/services/water-damage-restoration/${c.slug}`} className="city-link">
+                {c.name}, {c.stateAbbr}
+              </Link>
+            ))}
           </div>
         </div>
       </section>
