@@ -1,6 +1,6 @@
 /**
  * routes/leads.js
- * Public lead capture from the website form + admin lead/call viewing.
+ * Public lead capture from the website + admin lead/call viewing.
  */
 const express = require('express');
 const rateLimit = require('express-rate-limit');
@@ -18,7 +18,7 @@ const leadLimiter = rateLimit({
   message: { error: 'Too many submissions. Please try again shortly.' },
 });
 
-// PUBLIC - lead capture from the website form
+// PUBLIC - lead capture
 router.post('/', leadLimiter, (req, res) => {
   const { service, zip_code, name, phone, email, notes } = req.body || {};
 
@@ -67,7 +67,39 @@ router.get('/', authenticate, (req, res) => {
   res.json({ leads: rows });
 });
 
-// PROTECTED - admin views call log
+// PROTECTED - admin updates a lead
+router.patch('/:id', authenticate, (req, res) => {
+  const { id } = req.params;
+  const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(id);
+  if (!lead) return res.status(404).json({ error: 'Lead not found.' });
+
+  const updates = [];
+  const values = [];
+
+  if (req.body.status !== undefined) {
+    const valid = ['new', 'contacted', 'quoted', 'won', 'lost'];
+    if (!valid.includes(req.body.status)) {
+      return res.status(400).json({ error: 'Invalid status.' });
+    }
+    updates.push('status = ?');
+    values.push(req.body.status);
+  }
+  if (req.body.notes !== undefined) {
+    updates.push('notes = ?');
+    values.push(req.body.notes);
+  }
+
+  if (updates.length === 0) return res.json({ lead });
+
+  updates.push('updated_at = CURRENT_TIMESTAMP');
+  values.push(id);
+  db.prepare(`UPDATE leads SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+
+  const updated = db.prepare('SELECT * FROM leads WHERE id = ?').get(id);
+  res.json({ lead: updated });
+});
+
+// PROTECTED - admin views call log (with recording info)
 router.get('/calls', authenticate, (req, res) => {
   const rows = db
     .prepare(
@@ -79,6 +111,19 @@ router.get('/calls', authenticate, (req, res) => {
     )
     .all();
   res.json({ calls: rows });
+});
+
+// PROTECTED - admin updates call notes
+router.patch('/calls/:id', authenticate, (req, res) => {
+  const { id } = req.params;
+  const call = db.prepare('SELECT * FROM calls WHERE id = ?').get(id);
+  if (!call) return res.status(404).json({ error: 'Call not found.' });
+
+  if (req.body.notes !== undefined) {
+    db.prepare('UPDATE calls SET notes = ? WHERE id = ?').run(req.body.notes, id);
+  }
+  const updated = db.prepare('SELECT * FROM calls WHERE id = ?').get(id);
+  res.json({ call: updated });
 });
 
 module.exports = router;

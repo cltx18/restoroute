@@ -1,38 +1,69 @@
 # RestoreLink — Restoration Lead-Gen + Vendor Round-Robin
 
-A full-stack restoration lead-gen site with admin-managed vendor round-robin call forwarding via Twilio.
+Full-stack restoration lead-gen platform with admin-managed vendor round-robin call forwarding via Twilio, vendor self-service portal, call recording + transcripts, and 8 SEO-rich service content pages.
 
-## What's Built
+## Features
 
-**Frontend** (`/frontend`) — Vite + React
-- Public landing page with hero, multi-step service+ZIP+contact lead form, services grid, "How It Works", "Why Us", footer
-- Admin login (`/admin/login`)
-- Admin dashboard (`/admin`) — vendor CRUD, drag-to-reorder rotation, leads table, call log
+### Public site (SEO-rich)
+- Landing page with multi-step lead form (service → ZIP → contact)
+- 8 dedicated service pages at `/services/{slug}` with original long-form content, FAQs, schema.org markup, and embedded lead form
+  - Water Damage Restoration
+  - Mold Removal & Remediation
+  - Fire & Smoke Damage Restoration
+  - Storm Damage Restoration
+  - Biohazard Cleanup
+  - Asbestos Removal
+  - Foundation Repair
+  - Sewage Cleanup
+- Auto-generated `sitemap.xml` and `robots.txt`
+- Per-page meta tags, OG tags, FAQPage + Service + BreadcrumbList JSON-LD
 
-**Backend** (`/backend`) — Node + Express + SQLite (better-sqlite3)
-- `POST /api/leads` — public lead capture (rate-limited)
-- `POST /api/auth/login` — admin login (JWT)
-- `GET/POST/PATCH/DELETE /api/vendors` — protected vendor management
-- `POST /api/twilio/voice` — public Twilio webhook; picks the next vendor and returns TwiML to forward the call
-- `POST /api/twilio/voice/status` — logs dial result, falls through to the next vendor on no-answer/busy/failed
+### Admin portal (`/admin`)
+- Vendor CRUD with auto-generated login credentials
+- Round-robin reorder with ▲▼ buttons
+- Pause/resume vendors without removing them
+- Lead status tracking + per-call notes
+- Full call log with playable recordings and transcripts
+
+### Vendor portal (`/vendor`)
+- Vendors log in with the credentials shown when they were added
+- Forced password change on first login
+- Their own KPIs: calls routed, completed, leads, won
+- Their own call history with recordings + transcripts (downloadable as MP3 / TXT)
+- Their own leads with status pipeline (new → contacted → quoted → won/lost)
+- Pause/resume themselves in the rotation
+- Update phone number and service area
+- Per-call and per-lead notes
+
+### Twilio voice
+- Inbound call to your toll-free number → "this call may be recorded" announcement → forwarded to next vendor in rotation
+- Auto fall-through to the next vendor on no-answer / busy / failed (25s timeout)
+- Dual-channel call recording (caller + vendor on separate tracks)
+- Twilio transcription kicked off automatically when recording completes
+- Recordings streamed through your backend so Twilio creds stay server-side; admins and the matched vendor can play/download
+
+---
 
 ## Project Layout
 
 ```
 restoration-app/
+├── package.json              (root - tells Railway how to build)
 ├── backend/
-│   ├── routes/         (auth, vendors, leads, twilio)
-│   ├── services/       (roundRobin.js)
-│   ├── middleware/     (auth.js)
-│   ├── server.js       (entrypoint)
-│   ├── init-db.js      (schema + admin seed)
+│   ├── routes/               (auth, vendors, vendor portal, leads, twilio, recordings)
+│   ├── services/             (roundRobin.js)
+│   ├── middleware/           (auth.js)
+│   ├── server.js
+│   ├── init-db.js            (idempotent schema + admin seed)
 │   ├── db.js
 │   ├── package.json
 │   └── .env.example
 └── frontend/
     ├── src/
-    │   ├── pages/      (LandingPage, AdminLogin, AdminDashboard)
-    │   ├── components/ (LeadForm)
+    │   ├── pages/            (LandingPage, ServicePage, AdminLogin, AdminDashboard,
+    │   │                      VendorLogin, VendorChangePassword, VendorDashboard)
+    │   ├── components/       (LeadForm, SEO, SiteHeader, SiteFooter)
+    │   ├── data/services.js  (all 8 service-page content)
     │   ├── api.js
     │   ├── styles.css
     │   └── main.jsx
@@ -41,165 +72,147 @@ restoration-app/
     └── package.json
 ```
 
-## Local Setup
-
-### 1. Backend
-
-```bash
-cd backend
-cp .env.example .env
-# Edit .env — at minimum set JWT_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD
-npm install
-npm run init-db    # creates data.db and seeds the admin user
-npm start
-# → http://localhost:3001
-```
-
-### 2. Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-# → http://localhost:5173
-```
-
-The Vite dev server proxies `/api/*` to the backend, so no CORS surgery needed in dev.
-
-### 3. Sign in
-
-- Visit `http://localhost:5173/admin/login`
-- Use the credentials from your `.env` (`ADMIN_USERNAME` / `ADMIN_PASSWORD`)
-- Add vendors. Each vendor gets a generated password shown once — copy it.
-
 ---
 
-## Wiring Twilio (the 888 number → round-robin)
+## Deploying on Railway
 
-This is what actually makes inbound calls forward to vendors.
+If you already have it deploying, just push your changes — Railway will auto-redeploy. New stuff to know:
 
-### Step 1 — Buy a toll-free number in Twilio
-1. Sign in to https://console.twilio.com
-2. Phone Numbers → Buy a number → filter for toll-free (888, 877, 866, etc.)
-3. Toll-free numbers in the US require **toll-free verification** before they can place outbound calls and (eventually) before they'll consistently terminate to mobile carriers. Submit verification right after purchase. Until verified, calls may work but expect carrier filtering. See: https://www.twilio.com/docs/phone-numbers/regulatory/toll-free-verification
-
-### Step 2 — Expose your backend publicly
-Twilio needs to POST to your `/api/twilio/voice` endpoint over HTTPS.
-
-**For dev:** use ngrok
-```bash
-ngrok http 3001
-# copy the https URL, e.g. https://abc123.ngrok-free.app
+### Required env vars
+```
+JWT_SECRET=<long random string>
+ADMIN_USERNAME=logan
+ADMIN_PASSWORD=<your password>
+NODE_ENV=production
+FRONTEND_URL=https://YOUR-RAILWAY-DOMAIN.up.railway.app
+PUBLIC_URL=https://YOUR-RAILWAY-DOMAIN.up.railway.app
 ```
 
-**For prod:** deploy the backend somewhere with HTTPS (Railway, Fly, Render, etc.)
+Do **not** set `PORT` — Railway sets it automatically.
 
-Set `PUBLIC_URL` in your backend `.env` to that HTTPS URL.
+### Database persistence
+Mount a Railway volume at `/app/backend` so your SQLite DB survives redeploys. The DB lives at `backend/data.db` by default. Optional: set `DATABASE_PATH=/data/data.db` and mount the volume at `/data` for a cleaner setup.
 
-### Step 3 — Point the Twilio number at your webhook
-1. Twilio Console → Phone Numbers → Manage → Active numbers → click your 888 number
-2. Under **Voice Configuration**:
-   - **A call comes in** → Webhook → `https://YOUR_PUBLIC_URL/api/twilio/voice` → HTTP POST
-   - **Primary handler fails** → leave as default or set a TwiML Bin fallback
-3. Save
-
-### Step 4 — Add your Twilio creds to backend `.env`
+### Twilio env vars (add when ready)
 ```
 TWILIO_ACCOUNT_SID=ACxxx...
 TWILIO_AUTH_TOKEN=xxx...
-TWILIO_PHONE_NUMBER=+18885551234
-PUBLIC_URL=https://abc123.ngrok-free.app
+TWILIO_PHONE_NUMBER=+1888xxxxxxx
 ```
-
-(`TWILIO_AUTH_TOKEN` + `PUBLIC_URL` enable signature validation in production — see `routes/twilio.js`.)
-
-### Step 5 — Test
-1. Add at least one vendor with a real, dialable phone number
-2. Call your 888 number from any phone
-3. You should hear: *"Thank you for calling. Please hold while we connect you with a local restoration specialist."*
-4. The vendor's phone rings. The dashboard's **Call Log** tab will show the routed call.
-5. Call again — the next vendor in rotation should receive it.
-
-### How the round-robin works
-- Active vendors are sorted by `rotation_order, id`
-- A persistent `next_vendor_index` pointer in `round_robin_state` tracks who's next
-- Each inbound call atomically picks the current vendor, advances the pointer, and increments that vendor's `total_calls`
-- If a vendor doesn't answer (no-answer / busy / failed within 25s), the system rolls to the next vendor automatically
-- Vendors can be paused (`is_active = 0`) — they're skipped without losing their slot
-- The admin can reorder vendors at any time using the ▲▼ buttons
 
 ---
 
-## Production Deployment
+## Wiring Twilio
 
-### Single-server (cheapest, fastest)
+This is what makes inbound calls forward, get recorded, and get transcribed.
+
+### 1. Buy a toll-free number
+Twilio Console → Phone Numbers → Buy a number → filter for Toll-Free, capability Voice. Pick an 888.
+
+### 2. Submit toll-free verification
+Right after purchase, Twilio prompts you for verification info. Without it, calls to your number get filtered or blocked by major carriers. Takes a few business days.
+
+### 3. Configure the number's webhooks
+In the Twilio Console, click your number → Voice Configuration:
+- **A call comes in** → Webhook → `https://YOUR-DOMAIN.up.railway.app/api/twilio/voice` → POST
+- Save
+
+### 4. Set the transcription callback (one-time, account-wide)
+Twilio's transcription completion fires to a callback URL you set on the Recording itself, but the simpler path is to set it as the default in your Twilio account settings. The recordings automatically trigger transcription via the REST call our backend makes; the result is polled back when transcription completes. Your transcripts will populate in the dashboards once Twilio finishes processing each one (usually a few minutes after the call ends).
+
+### 5. Test
+1. Add a vendor via admin dashboard (use your own cell as the phone)
+2. Call your toll-free number
+3. You'll hear the consent announcement, then your phone rings
+4. Pick up and have a quick conversation
+5. Hang up
+6. Check the admin → Call Log: you should see status `completed`, with a playable recording within a couple minutes, and a transcript within ~5 minutes
+7. Log into vendor portal as that vendor — same call/recording/transcript visible there
+
+---
+
+## Cost notes
+
+- **Twilio toll-free verification**: free
+- **Toll-free number**: ~$2/month
+- **Inbound minutes**: ~$0.022/min
+- **Outbound forwarded minutes**: ~$0.014/min
+- **Recording**: ~$0.0025/min
+- **Recording storage**: ~$0.0005/min/month
+- **Transcription**: ~$0.05/min (this is the expensive one)
+
+For a vendor receiving 50 calls/month at avg 4 min each: roughly $7-10/month per vendor in Twilio costs. Mostly transcription.
+
+When you're ready, swapping Twilio transcription for OpenAI Whisper drops transcription cost to about $0.006/min — same backend code path, different API call in `routes/twilio.js`.
+
+---
+
+## Legal note on call recording
+
+The TwiML announcement at the start of each call satisfies the consent requirement in all US states (including two-party consent states like California, Florida, and Pennsylvania). Don't disable that announcement without checking your state's requirements.
+
+---
+
+## Local Setup
+
 ```bash
-# Build frontend
-cd frontend && npm run build
-
-# The backend's server.js already serves /frontend/dist as static files,
-# so just deploy the whole repo and run:
-cd ../backend
-npm install --production
+# Backend
+cd backend
+cp .env.example .env  # edit JWT_SECRET, ADMIN_USERNAME, ADMIN_PASSWORD
+npm install
 npm run init-db
 npm start
+
+# Frontend (separate terminal)
+cd frontend
+npm install
+npm run dev
 ```
 
-### Recommended hosts
-- **Railway** — drop the repo in, set env vars, get HTTPS automatically. Backend + DB + frontend all on one box.
-- **Fly.io** — similar story, slightly more config.
-- **Render** — also fine.
-
-### Environment variables checklist
-- [ ] `JWT_SECRET` — long random string
-- [ ] `ADMIN_USERNAME` / `ADMIN_PASSWORD` — change from defaults
-- [ ] `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_PHONE_NUMBER`
-- [ ] `PUBLIC_URL` — your deployed HTTPS URL (no trailing slash)
-- [ ] `FRONTEND_URL` — set to same as PUBLIC_URL if single-server, or your separate frontend URL
-- [ ] `NODE_ENV=production` — turns on Twilio signature validation
-
-### Backups
-SQLite lives at `backend/data.db`. Back it up. On Railway/Fly, mount a volume for the backend folder so the DB persists across deploys.
-
----
-
-## What's NOT done yet (you said "we'll work on account details later")
-
-- **Vendor login portal** — vendor `password_hash` is stored and ready, but there's no `/vendor/login` route yet. Add when you're ready to build the vendor side.
-- **SMS notifications** — no text-to-vendor when a lead comes in. Easy add via Twilio Messaging.
-- **Geographic routing** — currently every vendor gets every call regardless of ZIP. Add ZIP-to-vendor matching when you have multiple service areas.
-- **TrustedForm / Jornaya** — the reference site uses TrustedForm for lead validation. Add a script tag in `index.html` if you want certified leads.
-- **Analytics** — drop GTM/GA into `index.html` when ready.
-
----
-
-## Common gotchas
-
-- **Twilio webhook returns 502/timeout** — your `PUBLIC_URL` is wrong or your tunnel is down. Test it: `curl -X POST https://YOUR_URL/api/twilio/voice` should return TwiML, not an error.
-- **Calls connect but vendor hears silence** — `answerOnBridge: true` is set in `routes/twilio.js`; if you're testing two phones on the same machine, that's why. Use two real phones.
-- **"No vendors configured" message on every call** — make sure at least one vendor has `is_active = 1` and a valid E.164 phone (`+1XXXXXXXXXX`).
-- **CORS errors in admin** — set `FRONTEND_URL` in backend `.env` to match where the frontend is served from.
-- **Toll-free calls fail to certain carriers** — submit toll-free verification with Twilio. This is a regulatory thing, not a bug in the code.
+Visit http://localhost:5173
 
 ---
 
 ## API quick reference
 
 ```
-POST   /api/auth/login          { username, password } → { token }
-GET    /api/auth/me             (Bearer)               → { user }
+# Public
+POST   /api/leads                           submit a lead
+POST   /api/twilio/voice                    Twilio inbound webhook
+POST   /api/twilio/voice/status             Twilio dial result
+POST   /api/twilio/recording-status         Twilio recording ready
+POST   /api/twilio/transcription            Twilio transcription ready
+GET    /sitemap.xml
+GET    /robots.txt
 
-GET    /api/vendors             (Bearer)               → { vendors, next_in_rotation, active_count }
-POST   /api/vendors             (Bearer)               → { vendor, credentials }
-PATCH  /api/vendors/:id         (Bearer)               → { vendor }
-DELETE /api/vendors/:id         (Bearer)               → { success }
-POST   /api/vendors/reorder     (Bearer) { order: [ids] }
-POST   /api/vendors/:id/regenerate-password (Bearer)   → { credentials }
+# Admin
+POST   /api/auth/login
+GET    /api/auth/me
+GET    /api/vendors
+POST   /api/vendors                          create + auto-generate vendor login
+PATCH  /api/vendors/:id
+DELETE /api/vendors/:id
+POST   /api/vendors/reorder
+POST   /api/vendors/:id/regenerate-password
+GET    /api/leads
+PATCH  /api/leads/:id
+GET    /api/leads/calls
+PATCH  /api/leads/calls/:id
 
-POST   /api/leads               (public, rate-limited) → { success, lead_id }
-GET    /api/leads               (Bearer)               → { leads }
-GET    /api/leads/calls         (Bearer)               → { calls }
+# Vendor portal
+POST   /api/vendor/login
+GET    /api/vendor/me
+PATCH  /api/vendor/me
+POST   /api/vendor/me/pause
+POST   /api/vendor/me/change-password
+GET    /api/vendor/stats
+GET    /api/vendor/calls
+PATCH  /api/vendor/calls/:id
+GET    /api/vendor/leads
+PATCH  /api/vendor/leads/:id
 
-POST   /api/twilio/voice        (public, Twilio)       → TwiML
-POST   /api/twilio/voice/status (public, Twilio)       → TwiML
+# Recordings (admin or matched vendor)
+GET    /api/recordings/:callId.mp3?token=<jwt>[&download=1]
+GET    /api/recordings/:callId.wav?token=<jwt>[&download=1]
+GET    /api/recordings/:callId/transcript.txt?token=<jwt>[&download=1]
 ```

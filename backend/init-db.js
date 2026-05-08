@@ -1,23 +1,21 @@
 /**
  * init-db.js
  * Initializes the SQLite database schema and seeds the admin user.
- * Run with: npm run init-db
+ * Idempotent: safe to run on every deploy.
  */
 require('dotenv').config();
 const Database = require('better-sqlite3');
 const bcrypt = require('bcryptjs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, 'data.db');
+const DB_PATH = process.env.DATABASE_PATH || path.join(__dirname, 'data.db');
 const db = new Database(DB_PATH);
 
-// Enable foreign keys
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
-console.log('Creating tables...');
+console.log(`Using database at ${DB_PATH}`);
 
-// Admin / single-user table (the platform owner)
 db.exec(`
   CREATE TABLE IF NOT EXISTS admins (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,7 +25,6 @@ db.exec(`
   );
 `);
 
-// Vendor accounts - each vendor that gets added to the round-robin
 db.exec(`
   CREATE TABLE IF NOT EXISTS vendors (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,19 +33,19 @@ db.exec(`
     email TEXT UNIQUE NOT NULL,
     phone_number TEXT NOT NULL,
     service_area TEXT,
-    services TEXT,                       -- comma-separated list of services
-    password_hash TEXT NOT NULL,         -- temp password generated at create time
-    temp_password TEXT,                  -- plaintext shown once to admin (cleared later)
-    is_active INTEGER DEFAULT 1,         -- 0 = paused (skipped in rotation)
-    rotation_order INTEGER DEFAULT 0,    -- position in the round-robin
+    services TEXT,
+    password_hash TEXT NOT NULL,
+    temp_password TEXT,
+    is_active INTEGER DEFAULT 1,
+    rotation_order INTEGER DEFAULT 0,
     last_assigned_at DATETIME,
     total_calls INTEGER DEFAULT 0,
+    must_change_password INTEGER DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 `);
 
-// Tracks the round-robin pointer (which vendor is next)
 db.exec(`
   CREATE TABLE IF NOT EXISTS round_robin_state (
     id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -57,22 +54,28 @@ db.exec(`
   );
 `);
 
-// Inbound call log (records every call routed through the system)
 db.exec(`
   CREATE TABLE IF NOT EXISTS calls (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     twilio_call_sid TEXT,
+    parent_call_sid TEXT,
     caller_number TEXT,
     routed_to_vendor_id INTEGER,
     routed_to_phone TEXT,
-    status TEXT,                         -- ringing, in-progress, completed, no-answer, failed
+    status TEXT,
     duration INTEGER,
+    recording_sid TEXT,
+    recording_url TEXT,
+    recording_duration INTEGER,
+    transcription_sid TEXT,
+    transcription_text TEXT,
+    transcription_status TEXT,
+    notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (routed_to_vendor_id) REFERENCES vendors(id) ON DELETE SET NULL
   );
 `);
 
-// Leads from the website form (service + zip submissions)
 db.exec(`
   CREATE TABLE IF NOT EXISTS leads (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,20 +85,42 @@ db.exec(`
     phone TEXT,
     email TEXT,
     notes TEXT,
+    status TEXT DEFAULT 'new',
     routed_to_vendor_id INTEGER,
+    vendor_notes TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (routed_to_vendor_id) REFERENCES vendors(id) ON DELETE SET NULL
   );
 `);
 
-// Initialize round-robin pointer if missing
+// Migrations for previously-deployed databases
+function addColumnIfMissing(table, column, definition) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (!cols.find((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+    console.log(`  + Added ${table}.${column}`);
+  }
+}
+
+addColumnIfMissing('vendors', 'must_change_password', 'INTEGER DEFAULT 1');
+addColumnIfMissing('calls', 'parent_call_sid', 'TEXT');
+addColumnIfMissing('calls', 'recording_sid', 'TEXT');
+addColumnIfMissing('calls', 'recording_url', 'TEXT');
+addColumnIfMissing('calls', 'recording_duration', 'INTEGER');
+addColumnIfMissing('calls', 'transcription_sid', 'TEXT');
+addColumnIfMissing('calls', 'transcription_text', 'TEXT');
+addColumnIfMissing('calls', 'transcription_status', 'TEXT');
+addColumnIfMissing('calls', 'notes', 'TEXT');
+addColumnIfMissing('leads', 'status', "TEXT DEFAULT 'new'");
+addColumnIfMissing('leads', 'vendor_notes', 'TEXT');
+addColumnIfMissing('leads', 'updated_at', 'DATETIME');
+
 const rrRow = db.prepare('SELECT id FROM round_robin_state WHERE id = 1').get();
 if (!rrRow) {
   db.prepare('INSERT INTO round_robin_state (id, next_vendor_index) VALUES (1, 0)').run();
-  console.log('Initialized round-robin pointer.');
 }
 
-// Seed the admin user from env
 const adminUsername = process.env.ADMIN_USERNAME || 'admin';
 const adminPassword = process.env.ADMIN_PASSWORD || 'changeme123';
 
@@ -103,8 +128,7 @@ const existing = db.prepare('SELECT id FROM admins WHERE username = ?').get(admi
 if (!existing) {
   const hash = bcrypt.hashSync(adminPassword, 10);
   db.prepare('INSERT INTO admins (username, password_hash) VALUES (?, ?)').run(adminUsername, hash);
-  console.log(`✓ Admin user created: ${adminUsername} / ${adminPassword}`);
-  console.log('  → CHANGE THIS PASSWORD before deploying to production.');
+  console.log(`✓ Admin user created: ${adminUsername}`);
 } else {
   console.log(`Admin user "${adminUsername}" already exists.`);
 }

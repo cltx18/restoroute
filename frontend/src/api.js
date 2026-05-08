@@ -1,22 +1,32 @@
 // src/api.js
-// Tiny fetch wrapper. Uses Vite proxy in dev so we can call /api/* directly.
-
 const API_BASE = '/api';
 
-function getToken() {
+// --- Admin token ---
+export function getToken() {
   return localStorage.getItem('admin_token');
 }
-
 export function setToken(token) {
   if (token) localStorage.setItem('admin_token', token);
   else localStorage.removeItem('admin_token');
 }
 
-async function request(path, { method = 'GET', body, auth = false } = {}) {
+// --- Vendor token ---
+export function getVendorToken() {
+  return localStorage.getItem('vendor_token');
+}
+export function setVendorToken(token) {
+  if (token) localStorage.setItem('vendor_token', token);
+  else localStorage.removeItem('vendor_token');
+}
+
+async function request(path, { method = 'GET', body, tokenType = null } = {}) {
   const headers = { 'Content-Type': 'application/json' };
-  if (auth) {
-    const token = getToken();
-    if (token) headers.Authorization = `Bearer ${token}`;
+  if (tokenType === 'admin') {
+    const t = getToken();
+    if (t) headers.Authorization = `Bearer ${t}`;
+  } else if (tokenType === 'vendor') {
+    const t = getVendorToken();
+    if (t) headers.Authorization = `Bearer ${t}`;
   }
 
   const res = await fetch(API_BASE + path, {
@@ -26,7 +36,7 @@ async function request(path, { method = 'GET', body, auth = false } = {}) {
   });
 
   let data = null;
-  try { data = await res.json(); } catch { /* no-op */ }
+  try { data = await res.json(); } catch { /* */ }
 
   if (!res.ok) {
     const err = new Error((data && data.error) || `Request failed (${res.status})`);
@@ -40,19 +50,35 @@ export const api = {
   // Public
   submitLead: (payload) => request('/leads', { method: 'POST', body: payload }),
 
-  // Auth
+  // Admin auth
   login: (username, password) => request('/auth/login', { method: 'POST', body: { username, password } }),
-  me: () => request('/auth/me', { auth: true }),
+  me: () => request('/auth/me', { tokenType: 'admin' }),
 
-  // Vendors
-  listVendors: () => request('/vendors', { auth: true }),
-  createVendor: (payload) => request('/vendors', { method: 'POST', body: payload, auth: true }),
-  updateVendor: (id, payload) => request(`/vendors/${id}`, { method: 'PATCH', body: payload, auth: true }),
-  deleteVendor: (id) => request(`/vendors/${id}`, { method: 'DELETE', auth: true }),
-  reorderVendors: (order) => request('/vendors/reorder', { method: 'POST', body: { order }, auth: true }),
-  regeneratePassword: (id) => request(`/vendors/${id}/regenerate-password`, { method: 'POST', auth: true }),
+  // Admin vendors
+  listVendors: () => request('/vendors', { tokenType: 'admin' }),
+  createVendor: (payload) => request('/vendors', { method: 'POST', body: payload, tokenType: 'admin' }),
+  updateVendor: (id, payload) => request(`/vendors/${id}`, { method: 'PATCH', body: payload, tokenType: 'admin' }),
+  deleteVendor: (id) => request(`/vendors/${id}`, { method: 'DELETE', tokenType: 'admin' }),
+  reorderVendors: (order) => request('/vendors/reorder', { method: 'POST', body: { order }, tokenType: 'admin' }),
+  regeneratePassword: (id) => request(`/vendors/${id}/regenerate-password`, { method: 'POST', tokenType: 'admin' }),
 
-  // Leads / calls
-  listLeads: () => request('/leads', { auth: true }),
-  listCalls: () => request('/leads/calls', { auth: true }),
+  // Admin leads / calls
+  listLeads: () => request('/leads', { tokenType: 'admin' }),
+  updateLead: (id, payload) => request(`/leads/${id}`, { method: 'PATCH', body: payload, tokenType: 'admin' }),
+  listCalls: () => request('/leads/calls', { tokenType: 'admin' }),
+  updateCallNotes: (id, notes) => request(`/leads/calls/${id}`, { method: 'PATCH', body: { notes }, tokenType: 'admin' }),
+};
+
+export const vendorApi = {
+  login: (email, password) => request('/vendor/login', { method: 'POST', body: { email, password } }),
+  me: () => request('/vendor/me', { tokenType: 'vendor' }),
+  updateProfile: (payload) => request('/vendor/me', { method: 'PATCH', body: payload, tokenType: 'vendor' }),
+  togglePause: (is_active) => request('/vendor/me/pause', { method: 'POST', body: { is_active }, tokenType: 'vendor' }),
+  changePassword: (current_password, new_password) =>
+    request('/vendor/me/change-password', { method: 'POST', body: { current_password, new_password }, tokenType: 'vendor' }),
+  stats: () => request('/vendor/stats', { tokenType: 'vendor' }),
+  calls: () => request('/vendor/calls', { tokenType: 'vendor' }),
+  updateCallNotes: (id, notes) => request(`/vendor/calls/${id}`, { method: 'PATCH', body: { notes }, tokenType: 'vendor' }),
+  leads: () => request('/vendor/leads', { tokenType: 'vendor' }),
+  updateLead: (id, payload) => request(`/vendor/leads/${id}`, { method: 'PATCH', body: payload, tokenType: 'vendor' }),
 };
