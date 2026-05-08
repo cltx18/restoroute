@@ -329,7 +329,7 @@ function VendorsTab({ vendors, nextInRotation, onRefresh, onError, onSuccess, ne
       <div className="admin-card">
         <h2>Round-Robin Rotation</h2>
         <p className="sub">
-          Inbound calls to your 888 number are forwarded to the next active vendor in the list.
+          Inbound calls to your toll-free number are forwarded to the next active vendor in the list.
           Use the arrows to reorder. Highlighted row is next up.
         </p>
 
@@ -527,7 +527,7 @@ function CallsTab({ calls, loading }) {
   return (
     <div className="admin-card">
       <h2>Inbound Call Log</h2>
-      <p className="sub">Every call routed through your 888 number. Status comes from Twilio after the dial completes.</p>
+      <p className="sub">Every call routed through your toll-free number. Status comes from Twilio after the dial completes.</p>
       {calls.length === 0 ? (
         <div className="empty-state">
           No calls routed yet. Calls will appear here once your Twilio webhook is wired up.

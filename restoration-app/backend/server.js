@@ -16,6 +16,7 @@ const twilioRoutes = require('./routes/twilio');
 const recordingRoutes = require('./routes/recordings');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
 
 const corsOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')

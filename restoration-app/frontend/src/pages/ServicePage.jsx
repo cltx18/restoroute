@@ -28,7 +28,7 @@ export default function ServicePage() {
         provider: {
           '@type': 'LocalBusiness',
           name: 'RestoreLink',
-          telephone: '+18885551234',
+          telephone: '+18556981510',
         },
         areaServed: 'United States',
         url: canonical,

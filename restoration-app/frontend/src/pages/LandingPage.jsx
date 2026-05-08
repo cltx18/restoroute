@@ -14,7 +14,7 @@ export default function LandingPage() {
     name: 'RestoreLink',
     description:
       'Restoration contractor referral service. Connecting homeowners with vetted local water damage, mold, fire, and biohazard restoration professionals.',
-    telephone: '+18885551234',
+    telephone: '+18556981510',
     url: canonical,
     areaServed: 'United States',
     priceRange: 'Free quotes',

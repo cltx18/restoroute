@@ -1,8 +1,8 @@
 // src/components/SiteHeader.jsx
 import { Link } from 'react-router-dom';
 
-const PHONE_DISPLAY = '(888) 555-1234';
-const PHONE_HREF = 'tel:8885551234';
+const PHONE_DISPLAY = '(855) 698-1510';
+const PHONE_HREF = 'tel:8556981510';
 
 export default function SiteHeader() {
   return (
