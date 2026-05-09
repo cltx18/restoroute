@@ -54,12 +54,12 @@ export default function LandingPage() {
             <h1>Connect With Trusted Local Restoration Pros — Fast.</h1>
             <p className="lead">
               Water damage, mold, fire, biohazard, and more. We match you with vetted, licensed restoration
-              specialists in your area. Free quotes. Zero obligation.
+              specialists in your area. Free quotes. Same-day response.
             </p>
             <div className="hero-badges">
               <span className="hero-badge">⏱ Same-day appointments</span>
               <span className="hero-badge">✓ Licensed & insured pros</span>
-              <span className="hero-badge">💯 100% free service</span>
+              <span className="hero-badge">💯 Free, no-obligation quotes</span>
             </div>
           </div>
           <LeadForm />
@@ -122,8 +122,8 @@ export default function LandingPage() {
               <p>Every contractor in our network is licensed, insured, and reviewed before joining.</p>
             </div>
             <div className="why-card">
-              <h3>Completely Free</h3>
-              <p>Our matching service is 100% free. No financial info required — ever.</p>
+              <h3>Insurance-Friendly</h3>
+              <p>Our network pros routinely work directly with major insurance carriers and document claims in Xactimate.</p>
             </div>
             <div className="why-card">
               <h3>No Obligation</h3>
