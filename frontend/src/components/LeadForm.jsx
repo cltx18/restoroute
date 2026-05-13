@@ -25,6 +25,7 @@ export default function LeadForm({ initialService = '' }) {
     name: '',
     phone: '',
     email: '',
+    address: '',
     notes: '',
   });
 
@@ -175,6 +176,18 @@ export default function LeadForm({ initialService = '' }) {
               onChange={(e) => update('email', e.target.value)}
             />
             {errors.email && <div className="form-error">{errors.email}</div>}
+          </div>
+
+          <div className="form-row">
+            <label htmlFor="address">Service address <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+            <input
+              id="address"
+              type="text"
+              autoComplete="street-address"
+              placeholder="e.g. 1234 Main St, Denver"
+              value={form.address}
+              onChange={(e) => update('address', e.target.value)}
+            />
           </div>
 
           <div className="form-row">

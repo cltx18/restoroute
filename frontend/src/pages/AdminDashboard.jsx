@@ -498,6 +498,8 @@ function LeadsTab({ leads, loading }) {
               <th>Name</th>
               <th>Phone</th>
               <th>Email</th>
+              <th>Address</th>
+              <th>Description</th>
               <th>Routed To</th>
             </tr>
           </thead>
@@ -510,6 +512,16 @@ function LeadsTab({ leads, loading }) {
                 <td data-label="Name">{l.name || '—'}</td>
                 <td data-label="Phone">{l.phone ? formatPhone(l.phone) : '—'}</td>
                 <td data-label="Email">{l.email || '—'}</td>
+                <td data-label="Address" style={{ maxWidth: 200, fontSize: '0.88rem' }}>
+                  {l.address || <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                </td>
+                <td data-label="Description" style={{ maxWidth: 280, fontSize: '0.88rem' }}>
+                  {l.notes ? (
+                    <span style={{ fontStyle: 'italic' }}>"{l.notes}"</span>
+                  ) : (
+                    <span style={{ color: 'var(--text-muted)' }}>—</span>
+                  )}
+                </td>
                 <td data-label="Routed To">{l.routed_business_name || '—'}</td>
               </tr>
             ))}

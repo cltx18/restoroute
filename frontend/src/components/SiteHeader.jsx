@@ -25,6 +25,7 @@ export default function SiteHeader() {
             <Link to="/services/water-damage-restoration">Water Damage</Link>
             <Link to="/services/mold-removal">Mold</Link>
             <Link to="/services/fire-smoke-damage-restoration">Fire</Link>
+            <Link to="/resources">Resources</Link>
             <Link to="/#services">All Services</Link>
           </nav>
           <div className="header-cta">

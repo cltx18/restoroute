@@ -57,11 +57,18 @@ const CITY_SLUGS = [
   'castle-rock-co', 'commerce-city-co',
 ];
 
+const BLOG_SLUGS = [
+  'what-to-do-when-your-basement-floods-denver',
+  'is-mold-in-my-denver-home-dangerous',
+  'denver-hail-storm-damage-roof-checklist',
+];
+
 app.get('/sitemap.xml', (req, res) => {
   const base = (process.env.PUBLIC_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
   const today = new Date().toISOString().split('T')[0];
   const urls = [
     { loc: '/', priority: '1.0', changefreq: 'weekly' },
+    { loc: '/resources', priority: '0.8', changefreq: 'weekly' },
     ...SERVICE_SLUGS.map((slug) => ({
       loc: `/services/${slug}`,
       priority: '0.9',
@@ -74,6 +81,11 @@ app.get('/sitemap.xml', (req, res) => {
         changefreq: 'monthly',
       }))
     ),
+    ...BLOG_SLUGS.map((slug) => ({
+      loc: `/resources/${slug}`,
+      priority: '0.7',
+      changefreq: 'monthly',
+    })),
   ];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

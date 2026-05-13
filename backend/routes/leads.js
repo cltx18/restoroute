@@ -20,7 +20,7 @@ const leadLimiter = rateLimit({
 
 // PUBLIC - lead capture
 router.post('/', leadLimiter, (req, res) => {
-  const { service, zip_code, name, phone, email, notes } = req.body || {};
+  const { service, zip_code, name, phone, email, notes, address } = req.body || {};
 
   if (!service || !zip_code) {
     return res.status(400).json({ error: 'service and zip_code are required.' });
@@ -33,8 +33,8 @@ router.post('/', leadLimiter, (req, res) => {
 
   const result = db
     .prepare(
-      `INSERT INTO leads (service, zip_code, name, phone, email, notes, routed_to_vendor_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO leads (service, zip_code, name, phone, email, notes, address, routed_to_vendor_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       String(service).trim(),
@@ -43,6 +43,7 @@ router.post('/', leadLimiter, (req, res) => {
       (phone || '').trim() || null,
       (email || '').trim().toLowerCase() || null,
       (notes || '').trim() || null,
+      (address || '').trim() || null,
       peek ? peek.id : null
     );
 

@@ -56,6 +56,7 @@ export default function SiteFooter() {
               <a href={PHONE_HREF} style={{ color: '#fff' }} onClick={() => trackPhoneClick('footer')}>{PHONE_DISPLAY}</a>
             </p>
             <ul style={{ marginTop: 14 }}>
+              <li><Link to="/resources">Resources & Guides</Link></li>
               <li><Link to="/#how">How It Works</Link></li>
               <li><Link to="/#why">Why Choose Us</Link></li>
               <li><Link to="/vendor/login">Contractor Login</Link></li>

@@ -93,6 +93,7 @@ db.exec(`
     phone TEXT,
     email TEXT,
     notes TEXT,
+    address TEXT,
     status TEXT DEFAULT 'new',
     routed_to_vendor_id INTEGER,
     vendor_notes TEXT,
@@ -123,6 +124,7 @@ addColumnIfMissing('calls', 'notes', 'TEXT');
 addColumnIfMissing('leads', 'status', "TEXT DEFAULT 'new'");
 addColumnIfMissing('leads', 'vendor_notes', 'TEXT');
 addColumnIfMissing('leads', 'updated_at', 'DATETIME');
+addColumnIfMissing('leads', 'address', 'TEXT');
 
 const rrRow = db.prepare('SELECT id FROM round_robin_state WHERE id = 1').get();
 if (!rrRow) {
