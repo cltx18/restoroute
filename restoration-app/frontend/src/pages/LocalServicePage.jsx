@@ -6,6 +6,7 @@ import SiteHeader, { PHONE_DISPLAY, PHONE_HREF } from '../components/SiteHeader.
 import SiteFooter from '../components/SiteFooter.jsx';
 import { SERVICES, SERVICE_LIST } from '../data/services.js';
 import { CITIES } from '../data/cities.js';
+import { trackPhoneClick } from '../lib/tracking.js';
 
 export default function LocalServicePage() {
   const { slug, city } = useParams();
@@ -168,7 +169,7 @@ export default function LocalServicePage() {
           <p style={{ color: 'var(--text-muted)', marginBottom: 18 }}>
             Get connected with a local {cityData.name} specialist within minutes.
           </p>
-          <a href={PHONE_HREF} className="btn btn-primary" style={{ display: 'inline-flex', maxWidth: 320, margin: '0 auto' }}>
+          <a href={PHONE_HREF} className="btn btn-primary" style={{ display: 'inline-flex', maxWidth: 320, margin: '0 auto' }} onClick={() => trackPhoneClick(`local_${cityData.slug}`)}>
             📞 Call {PHONE_DISPLAY}
           </a>
         </div>

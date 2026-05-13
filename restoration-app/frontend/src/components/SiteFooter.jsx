@@ -1,6 +1,7 @@
 // src/components/SiteFooter.jsx
 import { Link } from 'react-router-dom';
 import { PHONE_DISPLAY, PHONE_HREF } from './SiteHeader.jsx';
+import { trackPhoneClick } from '../lib/tracking.js';
 
 const FOOTER_CITIES = [
   { slug: 'denver-co', name: 'Denver' },
@@ -52,7 +53,7 @@ export default function SiteFooter() {
           <div>
             <h4>24/7 Emergency</h4>
             <p style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff' }}>
-              <a href={PHONE_HREF} style={{ color: '#fff' }}>{PHONE_DISPLAY}</a>
+              <a href={PHONE_HREF} style={{ color: '#fff' }} onClick={() => trackPhoneClick('footer')}>{PHONE_DISPLAY}</a>
             </p>
             <ul style={{ marginTop: 14 }}>
               <li><Link to="/#how">How It Works</Link></li>

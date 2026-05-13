@@ -5,6 +5,7 @@ import SiteHeader, { PHONE_DISPLAY, PHONE_HREF } from '../components/SiteHeader.
 import SiteFooter from '../components/SiteFooter.jsx';
 import { SERVICE_LIST } from '../data/services.js';
 import { CITY_LIST } from '../data/cities.js';
+import { trackPhoneClick } from '../lib/tracking.js';
 
 export default function LandingPage() {
   const canonical = (typeof window !== 'undefined' ? window.location.origin : '') + '/';
@@ -59,7 +60,7 @@ export default function LandingPage() {
             <div className="hero-badges">
               <span className="hero-badge">⏱ Same-day appointments</span>
               <span className="hero-badge">✓ Licensed & insured pros</span>
-              <span className="hero-badge">💯 Free, no-obligation quotes</span>
+              <span className="hero-badge">💯 Free Estimates</span>
             </div>
           </div>
           <LeadForm />
@@ -157,7 +158,7 @@ export default function LandingPage() {
         <div className="container">
           <h2>Need Help Right Now?</h2>
           <p>Our restoration specialists are standing by 24/7.</p>
-          <a href={PHONE_HREF}>📞 {PHONE_DISPLAY}</a>
+          <a href={PHONE_HREF} onClick={() => trackPhoneClick('landing_banner')}>📞 {PHONE_DISPLAY}</a>
         </div>
       </section>
 

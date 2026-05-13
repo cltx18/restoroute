@@ -6,6 +6,7 @@ import SiteHeader, { PHONE_DISPLAY, PHONE_HREF } from '../components/SiteHeader.
 import SiteFooter from '../components/SiteFooter.jsx';
 import { SERVICES, SERVICE_LIST } from '../data/services.js';
 import { CITY_LIST } from '../data/cities.js';
+import { trackPhoneClick } from '../lib/tracking.js';
 
 export default function ServicePage() {
   const { slug } = useParams();
@@ -84,7 +85,7 @@ export default function ServicePage() {
             <div className="hero-badges">
               <span className="hero-badge">⏱ 24/7 emergency response</span>
               <span className="hero-badge">✓ Licensed & insured</span>
-              <span className="hero-badge">💯 Free quotes</span>
+              <span className="hero-badge">💯 Free Estimates</span>
             </div>
           </div>
           <LeadForm initialService={service.title} />
@@ -118,7 +119,7 @@ export default function ServicePage() {
           <p style={{ color: 'var(--text-muted)', marginBottom: 18 }}>
             Get connected with a local specialist in your area within minutes.
           </p>
-          <a href={PHONE_HREF} className="btn btn-primary" style={{ display: 'inline-flex', maxWidth: 320, margin: '0 auto' }}>
+          <a href={PHONE_HREF} className="btn btn-primary" style={{ display: 'inline-flex', maxWidth: 320, margin: '0 auto' }} onClick={() => trackPhoneClick('service_page')}>
             📞 Call {PHONE_DISPLAY}
           </a>
         </div>

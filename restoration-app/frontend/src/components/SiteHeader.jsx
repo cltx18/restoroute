@@ -1,5 +1,6 @@
 // src/components/SiteHeader.jsx
 import { Link } from 'react-router-dom';
+import { trackPhoneClick } from '../lib/tracking.js';
 
 const PHONE_DISPLAY = '(855) 698-1510';
 const PHONE_HREF = 'tel:8556981510';
@@ -28,7 +29,13 @@ export default function SiteHeader() {
           </nav>
           <div className="header-cta">
             <span className="header-cta-label">24/7 Emergency</span>
-            <a href={PHONE_HREF} className="header-cta-phone">📞 {PHONE_DISPLAY}</a>
+            <a
+              href={PHONE_HREF}
+              className="header-cta-phone"
+              onClick={() => trackPhoneClick('header')}
+            >
+              📞 {PHONE_DISPLAY}
+            </a>
           </div>
         </div>
       </header>
