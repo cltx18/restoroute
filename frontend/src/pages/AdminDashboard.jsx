@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api, setToken } from '../api.js';
+import { api, setToken, getToken } from '../api.js';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -53,7 +53,7 @@ export default function AdminDashboard() {
     <div className="admin-shell">
       <div className="admin-header">
         <div className="container admin-header-inner">
-          <h1>🛠️ RestoreLink Admin</h1>
+          <h1>🛠️ Local Restore & Clean Admin</h1>
           <button className="btn btn-outline" onClick={logout} style={{ background: '#fff' }}>
             Sign Out
           </button>
@@ -524,6 +524,7 @@ function LeadsTab({ leads, loading }) {
 
 function CallsTab({ calls, loading }) {
   if (loading) return <div className="admin-card">Loading…</div>;
+  const token = getToken();
   return (
     <div className="admin-card">
       <h2>Inbound Call Log</h2>
@@ -539,9 +540,10 @@ function CallsTab({ calls, loading }) {
               <th>When</th>
               <th>From</th>
               <th>Routed To</th>
-              <th>Vendor Phone</th>
               <th>Status</th>
               <th>Duration</th>
+              <th>Recording</th>
+              <th>Transcript</th>
             </tr>
           </thead>
           <tbody>
@@ -549,14 +551,62 @@ function CallsTab({ calls, loading }) {
               <tr key={c.id}>
                 <td data-label="When">{new Date(c.created_at + 'Z').toLocaleString()}</td>
                 <td data-label="From">{c.caller_number ? formatPhone(c.caller_number) : '—'}</td>
-                <td data-label="Routed To">{c.routed_business_name || '—'}</td>
-                <td data-label="Vendor Phone">{c.routed_to_phone ? formatPhone(c.routed_to_phone) : '—'}</td>
+                <td data-label="Routed To">
+                  {c.routed_business_name || '—'}
+                  {c.routed_to_phone && (
+                    <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                      {formatPhone(c.routed_to_phone)}
+                    </div>
+                  )}
+                </td>
                 <td data-label="Status">
                   <span className={`badge ${c.status === 'completed' ? 'badge-active' : 'badge-inactive'}`}>
                     {c.status || '—'}
                   </span>
                 </td>
                 <td data-label="Duration">{c.duration ? `${c.duration}s` : '—'}</td>
+                <td data-label="Recording">
+                  {c.recording_sid ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <audio
+                        controls
+                        preload="none"
+                        src={`/api/recordings/${c.id}.mp3?token=${encodeURIComponent(token)}`}
+                        style={{ height: 32, width: 200 }}
+                      />
+                      <a
+                        href={`/api/recordings/${c.id}.mp3?download=1&token=${encodeURIComponent(token)}`}
+                        style={{ fontSize: '0.82rem' }}
+                      >
+                        ⬇ Download MP3
+                      </a>
+                    </div>
+                  ) : (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                      {c.status === 'completed' ? 'Processing…' : '—'}
+                    </span>
+                  )}
+                </td>
+                <td data-label="Transcript">
+                  {c.transcription_text ? (
+                    <details>
+                      <summary style={{ cursor: 'pointer', fontSize: '0.85rem' }}>View / Download</summary>
+                      <p style={{ marginTop: 6, fontSize: '0.85rem', color: 'var(--text-muted)', maxWidth: 320 }}>
+                        {c.transcription_text}
+                      </p>
+                      <a
+                        href={`/api/recordings/${c.id}/transcript.txt?download=1&token=${encodeURIComponent(token)}`}
+                        style={{ fontSize: '0.82rem' }}
+                      >
+                        ⬇ Download .txt
+                      </a>
+                    </details>
+                  ) : (
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                      {c.transcription_status === 'in-progress' ? 'Processing…' : '—'}
+                    </span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

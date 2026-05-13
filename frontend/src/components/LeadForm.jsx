@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { api } from '../api.js';
+import { trackLeadSubmit, trackFormStep } from '../lib/tracking.js';
 
 const SERVICES = [
   'Water Damage',
@@ -52,7 +53,10 @@ export default function LeadForm({ initialService = '' }) {
 
   const handleNext = (event) => {
     event.preventDefault();
-    if (validateStep1()) setStep(2);
+    if (validateStep1()) {
+      trackFormStep('step1_to_step2', { service: form.service, zip: form.zip_code });
+      setStep(2);
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -60,7 +64,12 @@ export default function LeadForm({ initialService = '' }) {
     if (!validateStep2()) return;
     setSubmitting(true);
     try {
-      await api.submitLead(form);
+      const result = await api.submitLead(form);
+      trackLeadSubmit({
+        service: form.service,
+        zip_code: form.zip_code,
+        lead_id: result?.lead_id,
+      });
       setDone(true);
     } catch (err) {
       setErrors({ _global: err.message });

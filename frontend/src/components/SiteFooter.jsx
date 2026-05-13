@@ -1,6 +1,20 @@
 // src/components/SiteFooter.jsx
 import { Link } from 'react-router-dom';
 import { PHONE_DISPLAY, PHONE_HREF } from './SiteHeader.jsx';
+import { trackPhoneClick } from '../lib/tracking.js';
+
+const FOOTER_CITIES = [
+  { slug: 'denver-co', name: 'Denver' },
+  { slug: 'aurora-co', name: 'Aurora' },
+  { slug: 'lakewood-co', name: 'Lakewood' },
+  { slug: 'thornton-co', name: 'Thornton' },
+  { slug: 'arvada-co', name: 'Arvada' },
+  { slug: 'westminster-co', name: 'Westminster' },
+  { slug: 'centennial-co', name: 'Centennial' },
+  { slug: 'boulder-co', name: 'Boulder' },
+  { slug: 'highlands-ranch-co', name: 'Highlands Ranch' },
+  { slug: 'parker-co', name: 'Parker' },
+];
 
 export default function SiteFooter() {
   return (
@@ -8,9 +22,9 @@ export default function SiteFooter() {
       <div className="container">
         <div className="footer-grid">
           <div>
-            <h4>RestoreLink</h4>
+            <h4>Local Restore & Clean</h4>
             <p style={{ fontSize: '0.9rem', marginBottom: 8 }}>
-              Connecting homeowners with trusted local restoration professionals nationwide.
+              Connecting Denver metro homeowners with trusted local restoration professionals 24/7.
             </p>
           </div>
           <div>
@@ -27,27 +41,34 @@ export default function SiteFooter() {
             </ul>
           </div>
           <div>
-            <h4>Company</h4>
+            <h4>Service Areas</h4>
             <ul>
-              <li><Link to="/#how">How It Works</Link></li>
-              <li><Link to="/#why">Why Choose Us</Link></li>
-              <li><Link to="/vendor/login">Contractor Login</Link></li>
+              {FOOTER_CITIES.map((c) => (
+                <li key={c.slug}>
+                  <Link to={`/services/water-damage-restoration/${c.slug}`}>{c.name}, CO</Link>
+                </li>
+              ))}
             </ul>
           </div>
           <div>
             <h4>24/7 Emergency</h4>
             <p style={{ fontSize: '1.4rem', fontWeight: 700, color: '#fff' }}>
-              <a href={PHONE_HREF} style={{ color: '#fff' }}>{PHONE_DISPLAY}</a>
+              <a href={PHONE_HREF} style={{ color: '#fff' }} onClick={() => trackPhoneClick('footer')}>{PHONE_DISPLAY}</a>
             </p>
+            <ul style={{ marginTop: 14 }}>
+              <li><Link to="/#how">How It Works</Link></li>
+              <li><Link to="/#why">Why Choose Us</Link></li>
+              <li><Link to="/vendor/login">Contractor Login</Link></li>
+            </ul>
           </div>
         </div>
         <div className="footer-bottom">
           <p className="disclaimer">
-            RestoreLink is a referral service connecting property owners with independent restoration contractors.
-            Providers in our network are independently licensed and insured. RestoreLink does not perform restoration
+            Local Restore & Clean is a referral service connecting property owners with independent restoration contractors.
+            Providers in our network are independently licensed and insured. Local Restore & Clean does not perform restoration
             work and does not warrant or guarantee any work performed by network providers.
           </p>
-          <p>© {new Date().getFullYear()} RestoreLink. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Local Restore & Clean. All rights reserved.</p>
         </div>
       </div>
     </footer>

@@ -16,6 +16,7 @@ const twilioRoutes = require('./routes/twilio');
 const recordingRoutes = require('./routes/recordings');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3001;
 
 const corsOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
@@ -49,6 +50,13 @@ const SERVICE_SLUGS = [
   'sewage-cleanup',
 ];
 
+const CITY_SLUGS = [
+  'denver-co', 'aurora-co', 'lakewood-co', 'thornton-co', 'arvada-co',
+  'westminster-co', 'centennial-co', 'boulder-co', 'highlands-ranch-co',
+  'englewood-co', 'wheat-ridge-co', 'littleton-co', 'parker-co',
+  'castle-rock-co', 'commerce-city-co',
+];
+
 app.get('/sitemap.xml', (req, res) => {
   const base = (process.env.PUBLIC_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
   const today = new Date().toISOString().split('T')[0];
@@ -59,6 +67,13 @@ app.get('/sitemap.xml', (req, res) => {
       priority: '0.9',
       changefreq: 'monthly',
     })),
+    ...SERVICE_SLUGS.flatMap((slug) =>
+      CITY_SLUGS.map((city) => ({
+        loc: `/services/${slug}/${city}`,
+        priority: '0.8',
+        changefreq: 'monthly',
+      }))
+    ),
   ];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
